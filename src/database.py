@@ -43,3 +43,5 @@ except pymongo.errors.ConnectionFailure:
 users_collection = db["users"]
 # Admin
 admins_collection = db["admins"]
+# User Data
+user_data_collection = db["user_data"]
