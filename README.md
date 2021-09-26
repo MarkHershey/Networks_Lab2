@@ -17,7 +17,7 @@ TA please refer to [demo](demo) for checkoff demo.
 
 1. Build and run containers using docker-compose
     ```bash
-    docker-compose up -d
+    docker-compose up --build
     ```
 2. Stop and remove containers
     ```bash
@@ -26,7 +26,7 @@ TA please refer to [demo](demo) for checkoff demo.
 
 Check API documentation after firing up local server
 
--   Go to [127.0.0.1:5000/api/docs](http://127.0.0.1:5000/api/docs)
+-   Go to [127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs)
 
 ## Disclaimers
 

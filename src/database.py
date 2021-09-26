@@ -6,10 +6,10 @@ from puts.logger import logger
 _DB_USER = os.environ.get("_DB_USER", "root")
 _DB_PASS = os.environ.get("_DB_PASS", "example")
 _DB_NAME = os.environ.get("_DB_NAME", "dev")
-_DB_DOMAIN = os.environ.get("_DB_SERVICE", "mongodb")
+_DB_DOMAIN = os.environ.get("_DB_SERVICE", "localhost")
 _DB_PORT = os.environ.get("_DB_PORT", 27017)
 
-print(
+logger.debug(
     f"""-----------------------------------
             MongoDB config:
             
@@ -22,7 +22,7 @@ print(
 
 client = pymongo.MongoClient(
     host=[f"{_DB_DOMAIN}:{_DB_PORT}"],
-    serverSelectionTimeoutMS=3000,  # 3 second timeout
+    serverSelectionTimeoutMS=10000,  # 10 second timeout
     username=str(_DB_USER),
     password=str(_DB_PASS),
 )

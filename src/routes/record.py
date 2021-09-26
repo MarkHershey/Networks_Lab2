@@ -104,8 +104,11 @@ async def get_records(
         for r in user_records:
             _transaction_time: datetime = r.get("date_time")
             if start_time <= _transaction_time <= end_time:
-                if filter_tag and tag in r.get("tags", []):
-                    q_results.append(r)
+                if filter_tag and tag not in r.get("tags", []):
+                    continue
+                q_results.append(r)
+    else:
+        q_results = user_records
 
     q_results = list(sorted(q_results, key=lambda x: x[sort_key], reverse=reverse))
 
@@ -136,7 +139,7 @@ async def create_new_record(
     if not user_data_dict:
         user_data_dict = dict(UserData(username=username).dict())
         try:
-            user_data_dict.insert_one(user_data_dict)
+            user_data_collection.insert_one(user_data_dict)
         except Exception as e:
             logger.error(e)
             raise HTTPException(

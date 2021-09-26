@@ -20,9 +20,9 @@ class Record(BaseModel):
     tags: List[str] = []  # user-defined tags
     reference: Optional[str] = None  # reference number from the receipt / bank record
     remarks: Optional[str] = None
-    star_flag: bool = False  # init to false
-    confirmed_flag: bool = False  # init to false if record is auto generated
-    exclude_flag: bool = False  # init to false
+    starred: bool = False  # init to false
+    confirmed: bool = False  # init to false if record is auto generated
+    excluded: bool = False  # init to false, excluded from amount total computation
 
     @validator("uid", pre=True, always=True)
     def default_uid(cls, v):

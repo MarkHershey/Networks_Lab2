@@ -14,9 +14,10 @@ class AuthHandler:
     # openssl rand -hex 32
     SECRET_KEY = os.environ.get("JWT_SECRET_KEY_PROD")
     if SECRET_KEY in (None, "None", "NA", "N.A.", ""):
-        SECRET_KEY = "replace_me_replace_me_replace_me"
+        # A fallback value for development
+        SECRET_KEY = "ae441da430f40de5b7c30d19243baaa7c2891e7e63a4bc44ad25e10edc408c54"
     ALGORITHM = "HS256"  # HS256 (HMAC with SHA-256)
-    ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+    ACCESS_TOKEN_EXPIRE_MINUTES = 7 * 24 * 60  # 7 days
 
     def get_password_hash(self, password: str) -> str:
         return self.pwd_context.hash(password)
