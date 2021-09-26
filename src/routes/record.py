@@ -13,12 +13,14 @@ from pymongo import ReturnDocument
 
 from ..auth import AuthHandler
 from ..database import *
+from ..db_helpers import check_and_insert_one_record
 from ..error_msg import ErrorMsg as MSG
 from ..functional import clean_dict
 from ..models.record import Record
 from ..models.user import UserData
+from ..statement_parser import get_records_from_csv
 
-router = APIRouter(prefix="/api/records", tags=["Purchase Record"])
+router = APIRouter(prefix="/api/records", tags=["Records"])
 auth_handler = AuthHandler()
 
 SRC_ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -126,37 +128,8 @@ async def create_new_record(
     new_record: Record, username=Depends(auth_handler.auth_wrapper)
 ):
     logger.debug(f"User({username}) creating a new record")
-
-    record_dict = dict(new_record.dict())
-
-    try:
-        user_data_dict: dict = user_data_collection.find_one({"username": username})
-    except Exception as e:
-        logger.error(MSG.DB_QUERY_ERROR)
-        logger.error(e)
-        raise HTTPException(status_code=500, detail=MSG.DB_QUERY_ERROR)
-
-    if not user_data_dict:
-        user_data_dict = dict(UserData(username=username).dict())
-        try:
-            user_data_collection.insert_one(user_data_dict)
-        except Exception as e:
-            logger.error(e)
-            raise HTTPException(
-                status_code=500, detail="Failed to insert into database"
-            )
-
-    try:
-        _updated = user_data_collection.find_one_and_update(
-            filter={"username": username},
-            update={"$push": {"records": record_dict}},
-            return_document=ReturnDocument.AFTER,
-        )
-    except Exception as e:
-        logger.error(e)
-        raise HTTPException(status_code=500, detail="Failed to insert into database")
-
-    return
+    updated_user_data = check_and_insert_one_record(new_record, username)
+    return updated_user_data
 
 
 @router.post("/import", status_code=201)
@@ -175,5 +148,28 @@ async def import_records_from_dbs(
     )
     if not saved_fp:
         raise HTTPException(status_code=500, detail="Server failed to save the file.")
+
+    data: dict = get_records_from_csv(filepath=saved_fp, username=username, debug=False)
+
+    insertions_count: int = data.get("insertions_count", 0)
+    logger.debug(f"{insertions_count} new records imported.")
+
+    return data
+
+
+@router.get("/export", status_code=200)
+async def export_records_to_json(
+    start_time: Optional[datetime] = None,
+    end_time: Optional[datetime] = None,
+    tag: Optional[str] = None,
+    offset: int = 0,
+    count: int = -1,
+    sort_by: str = "transaction time",
+    reverse: bool = False,
+    username=Depends(auth_handler.auth_wrapper),
+):
+    logger.debug(f"User({username}) exporting records to json")
+
+    ...
 
     return
