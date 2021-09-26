@@ -6,28 +6,28 @@ from puts.logger import logger
 _DB_USER = os.environ.get("_DB_USER", "root")
 _DB_PASS = os.environ.get("_DB_PASS", "example")
 _DB_NAME = os.environ.get("_DB_NAME", "dev")
+_DB_DOMAIN = os.environ.get("_DB_SERVICE", "mongodb")
+_DB_PORT = os.environ.get("_DB_PORT", 27017)
 
-
-logger.info(
+print(
     f"""-----------------------------------
             MongoDB config:
             
+            Host: {_DB_DOMAIN}:{_DB_PORT}
             User: {_DB_USER}
             Database Name: {_DB_NAME}
          -----------------------------------
 """
 )
-DOMAIN = "localhost"
-PORT = 27017
 
 client = pymongo.MongoClient(
-    host=[str(DOMAIN) + ":" + str(PORT)],
+    host=[f"{_DB_DOMAIN}:{_DB_PORT}"],
     serverSelectionTimeoutMS=3000,  # 3 second timeout
-    username=_DB_USER,
-    password=_DB_PASS,
+    username=str(_DB_USER),
+    password=str(_DB_PASS),
 )
 
-db = client[f"{_DB_NAME}"]
+db = client[str(_DB_NAME)]
 db_available = False
 
 try:

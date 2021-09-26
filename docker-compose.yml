@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+    mongodb:
+        image: mongo
+        container_name: ft-mongodb
+        restart: unless-stopped
+        environment:
+            PUID: "1000"
+            PGID: "1000"
+            TZ: "Asia/Singapore"
+            MONGO_INITDB_ROOT_USERNAME: "root"
+            MONGO_INITDB_ROOT_PASSWORD: "example"
+        volumes:
+            - ./mongo/data:/data/db
+    fastapi:
+        build:
+            context: ./src/
+            dockerfile: Dockerfile
+        container_name: ft-fastapi
+        restart: unless-stopped
+        depends_on:
+            - "mongodb"
+        ports:
+            - 5000:5000
+        environment:
+            PUID: "1000"
+            PGID: "1000"
+            TZ: "Asia/Singapore"
+            # MongoDB configs
+            _DB_USER: "root" # keep consistent with MONGO_INITDB_ROOT_USERNAME
+            _DB_PASS: "example" # keep consistent with MONGO_INITDB_ROOT_PASSWORD
+            _DB_NAME: "dev" # any name
+            _DB_SERVICE: "mongodb" # keep consistent with db service name
+            _DB_PORT: "27017" # default mongodb port: 27017
+            # FastAPI configs
+            PORT: "5000"
+            MODULE_NAME: "api.main"
+            LOG_LEVEL: "debug"
+            PRE_START_PATH: "/app/api/prestart.sh"
+            # Gunicorn configs
+            MAX_WORKERS: "2" # number of Gunicorn workers
+        volumes:
+            - "./logs:/app/logs"
+            - "./local_db:/app/api/local_db"
