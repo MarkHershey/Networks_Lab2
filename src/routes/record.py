@@ -1,9 +1,9 @@
 # purchase records
-
+import json
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -13,9 +13,9 @@ from pymongo import ReturnDocument
 
 from ..auth import AuthHandler
 from ..database import *
-from ..db_helpers import check_and_insert_one_record
+from ..db_helpers import check_and_insert_one_record, query_records
 from ..error_msg import ErrorMsg as MSG
-from ..functional import clean_dict
+from ..functional import clean_dict, json_serial
 from ..models.record import Record
 from ..models.user import UserData
 from ..statement_parser import get_records_from_csv
@@ -52,6 +52,26 @@ def save_user_file_to_local(file: UploadFile, username: str, save_name: str) -> 
         file.file.close()
 
 
+def save_json_to_local(
+    json_data: Union[dict, list], username: str, save_name: str
+) -> Path:
+
+    user_dir: Path = FILE_DIR / username
+
+    if not user_dir.is_dir():
+        os.makedirs(user_dir)
+
+    destination: Path = user_dir / save_name
+    try:
+        with destination.open(mode="w") as f:
+            json.dump(json_data, f, indent=4, default=json_serial)
+        return destination
+    except Exception as e:
+        logger.error(e)
+        logger.exception(e)
+        return None
+
+
 ##########################
 
 
@@ -69,56 +89,16 @@ async def get_records(
     # TODO: user validation
     logger.debug(f"User({username}) fetching records")
 
-    sort_by_mapping = {
-        "record time": "uid",
-        "transaction time": "date_time",
-        "amount": "amount",
-        "absolute amount": "amount",
-        "merchant": "merchant",
-        "category": "category",
-        "subcategory": "subcategory",
-    }
-
-    sort_key: str = sort_by_mapping.get(sort_by, "date_time")
-    offset = 0 if not isinstance(offset, int) or offset < 0 else offset
-    if count == 0:
-        return []
-
-    try:
-        user_data_dict: dict = user_data_collection.find_one({"username": username})
-        clean_dict(user_data_dict)
-    except Exception as e:
-        logger.error(MSG.DB_QUERY_ERROR)
-        logger.error(e)
-        raise HTTPException(status_code=500, detail=MSG.DB_QUERY_ERROR)
-
-    if not user_data_dict:
-        raise HTTPException(status_code=404, detail=MSG.DB_QUERY_ERROR)
-
-    user_records: List[dict] = user_data_dict.get("records")
-    q_results: List[dict] = []
-
-    if start_time or end_time or tag:
-        start_time = datetime(1970, 1, 1) if not start_time else start_time
-        end_time = datetime.now() if not end_time else end_time
-        filter_tag = False if tag is None else True
-
-        for r in user_records:
-            _transaction_time: datetime = r.get("date_time")
-            if start_time <= _transaction_time <= end_time:
-                if filter_tag and tag not in r.get("tags", []):
-                    continue
-                q_results.append(r)
-    else:
-        q_results = user_records
-
-    q_results = list(sorted(q_results, key=lambda x: x[sort_key], reverse=reverse))
-
-    if offset and offset < len(q_results):
-        q_results = q_results[offset:]
-
-    if count > 0:
-        q_results = q_results[:count]
+    q_results: List[dict] = query_records(
+        username=username,
+        start_time=start_time,
+        end_time=end_time,
+        tag=tag,
+        offset=offset,
+        count=count,
+        sort_by=sort_by,
+        reverse=reverse,
+    )
 
     return q_results
 
@@ -157,7 +137,7 @@ async def import_records_from_dbs(
     return data
 
 
-@router.get("/export", status_code=200)
+@router.get("/export", response_class=FileResponse)
 async def export_records_to_json(
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
@@ -170,6 +150,24 @@ async def export_records_to_json(
 ):
     logger.debug(f"User({username}) exporting records to json")
 
-    ...
+    q_results: List[dict] = query_records(
+        username=username,
+        start_time=start_time,
+        end_time=end_time,
+        tag=tag,
+        offset=offset,
+        count=count,
+        sort_by=sort_by,
+        reverse=reverse,
+    )
 
-    return
+    # export to json file at local
+    export_name = f"{username}_export_{timestamp_seconds()}.json"
+    saved_fp: Path = save_json_to_local(
+        json_data=q_results, username=username, save_name=export_name
+    )
+    if not saved_fp:
+        raise HTTPException(status_code=500, detail="Export failed.")
+
+    # this is a file response
+    return str(saved_fp)

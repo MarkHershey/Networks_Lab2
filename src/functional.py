@@ -1,3 +1,4 @@
+import string
 from datetime import date, datetime, time
 from typing import List
 
@@ -15,6 +16,44 @@ def uid_gen(prefix: str = "") -> str:
         return prefix.strip().upper() + "_" + uid
     else:
         return uid
+
+
+def username_normalize(username: str) -> str:
+
+    allowable_chars = string.ascii_letters + string.digits + "_"
+
+    if not isinstance(username, str):
+        return
+
+    if len(username) < 3:
+        return
+
+    username = username.strip()
+
+    for char in username:
+        if char not in allowable_chars:
+            return
+
+    return username
+
+
+def valid_password(password: str, min_length: int = 6, max_length: int = 30) -> bool:
+    allowable_chars = string.ascii_letters + string.digits + string.punctuation
+
+    if not isinstance(password, str):
+        return False
+
+    if min_length <= len(password) <= max_length:
+        return False
+
+    if password[0] in string.whitespace:
+        return False
+
+    for char in password:
+        if char not in allowable_chars:
+            return False
+
+    return True
 
 
 def clean_dict(data: dict) -> None:
@@ -81,3 +120,11 @@ def convert_datetime_to_date(datetime_obj: datetime) -> date:
     """
     assert isinstance(datetime_obj, datetime), "Not a datetime object."
     return datetime_obj.date()
+
+
+def json_serial(obj):
+    """JSON serializer for objects not serializable by default json code"""
+
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    raise TypeError("Type %s not serializable" % type(obj))

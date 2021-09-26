@@ -7,7 +7,7 @@ from ..access_utils import Access
 from ..auth import AuthHandler
 from ..database import *
 from ..functional import clean_dict
-from ..models.user import User, UserLoginResponse
+from ..models.user import User, UserLogin, UserLoginResponse
 
 router = APIRouter(prefix="/api/auth", tags=["User Authentication"])
 auth_handler = AuthHandler()
@@ -33,7 +33,7 @@ async def user_sign_up(new_user: User):
 
 
 @router.post("/signin", response_model=UserLoginResponse)
-async def user_sign_in(auth_details: User):
+async def user_sign_in(auth_details: UserLogin):
     try:
         user = users_collection.find_one({"username": auth_details.username})
     except Exception as e:
