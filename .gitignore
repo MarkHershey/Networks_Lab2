@@ -1,5 +1,7 @@
 # Project specific
 .vscode
+logs
+local_db
 mongo/data/*
 
 # Byte-compiled / optimized / DLL files
