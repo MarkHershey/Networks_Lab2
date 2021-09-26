@@ -1,4 +1,4 @@
-from markkk.logger import logger
+from puts.logger import logger
 from pydantic import BaseModel
 
 

@@ -1,7 +1,7 @@
 # authentications
 
 from fastapi import APIRouter, Depends, HTTPException
-from markkk.logger import logger
+from puts.logger import logger
 
 from ..access_utils import Access
 from ..auth import AuthHandler

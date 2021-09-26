@@ -3,7 +3,7 @@ import os
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from markkk.logger import logger
+from puts.logger import logger
 
 from .routes import auth, record
 

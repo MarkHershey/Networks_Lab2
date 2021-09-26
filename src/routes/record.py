@@ -1,10 +1,14 @@
 # purchase records
 
+import shutil
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, HTTPException
-from markkk.logger import logger
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from puts.logger import logger
+from puts.time import timestamp_seconds
 from pymongo import ReturnDocument
 
 from ..auth import AuthHandler
@@ -16,6 +20,37 @@ from ..models.user import UserData
 
 router = APIRouter(prefix="/api/records", tags=["Purchase Record"])
 auth_handler = AuthHandler()
+
+SRC_ROOT_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = SRC_ROOT_DIR / "local_db"
+FILE_DIR = DATA_DIR / "user_files"
+
+##########################
+
+
+def save_user_file_to_local(file: UploadFile, username: str, save_name: str) -> Path:
+    # ref: https://stackoverflow.com/a/63581187
+
+    user_dir: Path = FILE_DIR / username
+
+    if not user_dir.is_dir():
+        os.makedirs(user_dir)
+
+    destination: Path = user_dir / save_name
+    try:
+        with destination.open(mode="wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            buffer.close()
+            return destination
+    except Exception as e:
+        logger.error(e)
+        logger.exception(e)
+        return None
+    finally:
+        file.file.close()
+
+
+##########################
 
 
 @router.get("/", response_model=List[Record])
@@ -31,8 +66,6 @@ async def get_records(
 ):
     # TODO: user validation
     logger.debug(f"User({username}) fetching records")
-
-    # record_dict = dict(new_record.dict())
 
     sort_by_mapping = {
         "record time": "uid",
@@ -89,7 +122,6 @@ async def get_records(
 async def create_new_record(
     new_record: Record, username=Depends(auth_handler.auth_wrapper)
 ):
-    # TODO: user validation
     logger.debug(f"User({username}) creating a new record")
 
     record_dict = dict(new_record.dict())
@@ -120,4 +152,25 @@ async def create_new_record(
     except Exception as e:
         logger.error(e)
         raise HTTPException(status_code=500, detail="Failed to insert into database")
+
+    return
+
+
+@router.post("/import", status_code=201)
+async def import_records_from_dbs(
+    file: UploadFile = File(...), username=Depends(auth_handler.auth_wrapper)
+):
+    logger.debug(f"User({username}) creating a new record")
+
+    if not str(file.filename).endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Invalid File Format.")
+
+    # Save file to local
+    save_name = f"{username}_{timestamp_seconds()}.csv"
+    saved_fp: Path = save_user_file_to_local(
+        file=file, username=username, save_name=save_name
+    )
+    if not saved_fp:
+        raise HTTPException(status_code=500, detail="Server failed to save the file.")
+
     return

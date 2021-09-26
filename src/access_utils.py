@@ -1,5 +1,5 @@
 from fastapi import HTTPException
-from markkk.logger import logger
+from puts.logger import logger
 
 from .database import admins_collection
 from .error_msg import ErrorMsg as MSG

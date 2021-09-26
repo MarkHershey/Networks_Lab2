@@ -8,5 +8,5 @@ printf ">>> \xE2\x9C\x94 OK \n"
 
 # install project dependencies
 printf "\n>>> pip3 install project dependencies...\n"
-pip install --upgrade bcrypt pyjwt fastapi markkk passlib requests pytest uvicorn dnspython pymongo 
+pip install --upgrade bcrypt pyjwt fastapi puts passlib requests pytest uvicorn dnspython pymongo python-multipart
 printf ">>> \xE2\x9C\x94 OK \n"

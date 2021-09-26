@@ -1,7 +1,7 @@
 import os
 
 import pymongo
-from markkk.logger import logger
+from puts.logger import logger
 
 _DB_USER = os.environ.get("_DB_USER", "root")
 _DB_PASS = os.environ.get("_DB_PASS", "example")

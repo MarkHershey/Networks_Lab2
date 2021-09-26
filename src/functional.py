@@ -1,8 +1,8 @@
 from datetime import date, datetime, time
 from typing import List
 
-from markkk.logger import logger
-from markkk.time import timestamp_microseconds
+from puts.logger import logger
+from puts.time import timestamp_microseconds
 
 
 def uid_gen(prefix: str = "") -> str:

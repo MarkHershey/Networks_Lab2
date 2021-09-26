@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from markkk.logger import logger
+from puts.logger import logger
 from pydantic import BaseModel, validator
 
 from ..functional import uid_gen
