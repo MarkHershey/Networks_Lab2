@@ -9,9 +9,10 @@ from ..functional import uid_gen
 
 class Record(BaseModel):
     uid: Optional[str] = None  # imply time of record creation
+    username: Optional[str] = None
     date_time: Optional[datetime] = None  # time of purchase
     account_id: Optional[str] = None  # account
-    amount: float  # debit amount or credit amount
+    amount: float = None  # debit amount or credit amount
     amount_abs: Optional[float] = None  # absolute amount >= 0
     merchant: Optional[str] = None  # seller
     label: Optional[str] = None  # seller label
@@ -38,4 +39,4 @@ class Record(BaseModel):
 
     @validator("amount_abs", pre=True, always=True)
     def absolute_amount(cls, v, *, values, **kwargs):
-        return v or abs(values["amount"])
+        return v or abs(values["amount"]) if values["amount"] else None

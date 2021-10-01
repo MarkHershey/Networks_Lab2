@@ -15,7 +15,7 @@ from ..auth import AuthHandler
 from ..database import *
 from ..db_helpers import check_and_insert_one_record, query_records
 from ..error_msg import ErrorMsg as MSG
-from ..functional import clean_dict, json_serial
+from ..functional import clean_dict, json_serial, remove_none_value_keys
 from ..models.record import Record
 from ..models.user import UserData
 from ..statement_parser import get_records_from_csv
@@ -75,6 +75,15 @@ def save_json_to_local(
 ##########################
 
 
+@router.post("/", status_code=201)
+async def create_record(
+    new_record: Record, username=Depends(auth_handler.auth_wrapper)
+):
+    logger.debug(f"User({username}) creating a new record")
+    updated_user_data = check_and_insert_one_record(new_record, username)
+    return updated_user_data
+
+
 @router.get("/", response_model=List[Record])
 async def get_records(
     start_time: Optional[datetime] = None,
@@ -86,7 +95,6 @@ async def get_records(
     reverse: bool = False,
     username=Depends(auth_handler.auth_wrapper),
 ):
-    # TODO: user validation
     logger.debug(f"User({username}) fetching records")
 
     q_results: List[dict] = query_records(
@@ -103,13 +111,72 @@ async def get_records(
     return q_results
 
 
-@router.post("/", status_code=201)
-async def create_new_record(
-    new_record: Record, username=Depends(auth_handler.auth_wrapper)
+@router.get("/{uid}", response_model=Record)
+async def get_single_record(uid: str, username=Depends(auth_handler.auth_wrapper)):
+    logger.debug(f"User({username}) getting a record")
+    try:
+        record_dict: dict = records_collection.find_one(
+            filter={"username": username, "uid": uid}
+        )
+        clean_dict(record_dict)
+    except Exception as e:
+        logger.error(MSG.DB_QUERY_ERROR)
+        logger.error(e)
+        raise HTTPException(status_code=500, detail=MSG.DB_QUERY_ERROR)
+
+    if not record_dict:
+        logger.error(MSG.ITEM_NOT_FOUND)
+        raise HTTPException(status_code=404, detail=MSG.ITEM_NOT_FOUND)
+
+    return record_dict
+
+
+@router.put("/{uid}", response_model=Record)
+async def update_single_record(
+    uid: str, record: Record, username=Depends(auth_handler.auth_wrapper)
 ):
-    logger.debug(f"User({username}) creating a new record")
-    updated_user_data = check_and_insert_one_record(new_record, username)
-    return updated_user_data
+    logger.debug(f"User({username}) updating a record")
+    record_dict = dict(record.dict())
+    remove_none_value_keys(record_dict)
+
+    if record.uid != uid:
+        raise HTTPException(status_code=400, detail=MSG.INVALID_REQ)
+
+    try:
+        _updated = user_data_collection.find_one_and_update(
+            filter={"username": username, "uid": uid},
+            update={"$set": record_dict},
+            return_document=ReturnDocument.AFTER,
+        )
+    except Exception as e:
+        logger.error(MSG.DB_UPDATE_ERROR)
+        logger.error(e)
+        raise HTTPException(status_code=500, detail=MSG.DB_UPDATE_ERROR)
+
+    if not _updated:
+        logger.error(MSG.ITEM_NOT_FOUND)
+        raise HTTPException(status_code=404, detail=MSG.ITEM_NOT_FOUND)
+
+    return _updated
+
+
+@router.delete("/{uid}")
+async def delete_single_record(uid: str, username=Depends(auth_handler.auth_wrapper)):
+    logger.debug(f"User({username}) deleting a record")
+    try:
+        _delete_result = user_data_collection.delete_one(
+            filter={"username": username, "uid": uid}
+        )
+    except Exception as e:
+        logger.error(MSG.DB_UPDATE_ERROR)
+        logger.error(e)
+        raise HTTPException(status_code=500, detail=MSG.DB_UPDATE_ERROR)
+
+    if _delete_result.deleted_count != 1:
+        logger.error(MSG.ITEM_NOT_FOUND)
+        raise HTTPException(status_code=404, detail=MSG.ITEM_NOT_FOUND)
+
+    return
 
 
 @router.post("/import", status_code=201)

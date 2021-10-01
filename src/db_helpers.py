@@ -17,45 +17,24 @@ from .models.record import Record
 from .models.user import UserData
 
 
-def check_and_insert_one_record(record: Record, username: str) -> dict:
+def check_and_insert_one_record(record: Record, username: str):
     """
     This function assumes the username given in the argument is a valid user in the system,
     and the database insertion operation is already authorised.
     """
     assert isinstance(record, Record)
     assert isinstance(username, str)
+    record.username = username
     record_dict = dict(record.dict())
 
     try:
-        user_data_dict: dict = user_data_collection.find_one({"username": username})
+        _ack = records_collection.insert_one(record_dict)
     except Exception as e:
-        logger.error(MSG.DB_QUERY_ERROR)
+        logger.error(MSG.DB_UPDATE_ERROR)
         logger.error(e)
-        raise HTTPException(status_code=500, detail=MSG.DB_QUERY_ERROR)
+        raise HTTPException(status_code=500, detail=MSG.DB_UPDATE_ERROR)
 
-    if not user_data_dict:
-        # create a empty user data object in the database
-        user_data_dict = dict(UserData(username=username).dict())
-        try:
-            user_data_collection.insert_one(user_data_dict)
-        except Exception as e:
-            logger.error(e)
-            raise HTTPException(
-                status_code=500, detail="Failed to insert into database"
-            )
-
-    try:
-        updated_user_data = user_data_collection.find_one_and_update(
-            filter={"username": username},
-            update={"$push": {"records": record_dict}},
-            return_document=ReturnDocument.AFTER,
-        )
-        clean_dict(updated_user_data)
-    except Exception as e:
-        logger.error(e)
-        raise HTTPException(status_code=500, detail="Failed to insert into database")
-
-    return updated_user_data
+    return
 
 
 def query_records(
@@ -84,22 +63,21 @@ def query_records(
 
     sort_key: str = sort_by_mapping.get(sort_by, "date_time")
     offset = 0 if not isinstance(offset, int) or offset < 0 else offset
+
+    user_records: List[dict] = []
+    q_results: List[dict] = []
+
     if count == 0:
-        return []
+        return q_results
 
     try:
-        user_data_dict: dict = user_data_collection.find_one({"username": username})
-        clean_dict(user_data_dict)
+        for record_dict in records_collection.find(filter={"username": username}):
+            clean_dict(record_dict)
+            user_records.append(record_dict)
     except Exception as e:
         logger.error(MSG.DB_QUERY_ERROR)
         logger.error(e)
         raise HTTPException(status_code=500, detail=MSG.DB_QUERY_ERROR)
-
-    if not user_data_dict:
-        raise HTTPException(status_code=404, detail=MSG.DB_QUERY_ERROR)
-
-    user_records: List[dict] = user_data_dict.get("records")
-    q_results: List[dict] = []
 
     if start_time or end_time or tag:
         start_time = datetime(1970, 1, 1) if not start_time else start_time

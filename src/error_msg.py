@@ -12,6 +12,7 @@ class ErrorMsg:
     INVALID_STATUS_UPDATE_REQ = "Invalid application status update request."
     NOT_YOUR_AF = "Failed. Not your application."
     NO_AVAILABLE_SLOTS = "Failed. Not enough slots."
+    INVALID_REQ = "Invalid request."
 
     @staticmethod
     def permission_denied_msg(username: str) -> str:

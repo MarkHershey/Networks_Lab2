@@ -45,3 +45,5 @@ users_collection = db["users"]
 admins_collection = db["admins"]
 # User Data
 user_data_collection = db["user_data"]
+# Records
+records_collection = db["records"]
