@@ -16,7 +16,7 @@ from ..database import *
 from ..db_helpers import check_and_insert_one_record, query_records
 from ..error_msg import ErrorMsg as MSG
 from ..functional import clean_dict, json_serial, remove_none_value_keys
-from ..models.record import Record
+from ..models.record import Record, RecordEdit
 from ..models.user import UserData
 from ..statement_parser import get_records_from_csv
 
@@ -133,17 +133,14 @@ async def get_single_record(uid: str, username=Depends(auth_handler.auth_wrapper
 
 @router.put("/{uid}", response_model=Record)
 async def update_single_record(
-    uid: str, record: Record, username=Depends(auth_handler.auth_wrapper)
+    uid: str, record: RecordEdit, username=Depends(auth_handler.auth_wrapper)
 ):
     logger.debug(f"User({username}) updating a record")
     record_dict = dict(record.dict())
     remove_none_value_keys(record_dict)
 
-    if record.uid != uid:
-        raise HTTPException(status_code=400, detail=MSG.INVALID_REQ)
-
     try:
-        _updated = user_data_collection.find_one_and_update(
+        _updated = records_collection.find_one_and_update(
             filter={"username": username, "uid": uid},
             update={"$set": record_dict},
             return_document=ReturnDocument.AFTER,
@@ -164,7 +161,7 @@ async def update_single_record(
 async def delete_single_record(uid: str, username=Depends(auth_handler.auth_wrapper)):
     logger.debug(f"User({username}) deleting a record")
     try:
-        _delete_result = user_data_collection.delete_one(
+        _delete_result = records_collection.delete_one(
             filter={"username": username, "uid": uid}
         )
     except Exception as e:

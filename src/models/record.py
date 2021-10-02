@@ -40,3 +40,24 @@ class Record(BaseModel):
     @validator("amount_abs", pre=True, always=True)
     def absolute_amount(cls, v, *, values, **kwargs):
         return v or abs(values["amount"]) if values["amount"] else None
+
+
+class RecordEdit(BaseModel):
+    date_time: Optional[datetime] = None
+    account_id: Optional[str] = None
+    amount: Optional[float] = None
+    amount_abs: Optional[float] = None
+    merchant: Optional[str] = None
+    label: Optional[str] = None
+    bank_ref_code: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
+    location: Optional[str] = None
+    link: Optional[str] = None
+    tags: Optional[List[str]] = None
+    reference: Optional[str] = None
+    remarks: Optional[str] = None
+    imported: Optional[bool] = None
+    starred: Optional[bool] = None
+    confirmed: Optional[bool] = None
+    excluded: Optional[bool] = None
