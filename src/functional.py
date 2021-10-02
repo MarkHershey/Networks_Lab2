@@ -1,6 +1,6 @@
 import string
 from datetime import date, datetime, time
-from typing import List
+from typing import List, Tuple
 
 from puts.logger import logger
 from puts.time import timestamp_microseconds
@@ -37,23 +37,27 @@ def username_normalize(username: str) -> str:
     return username
 
 
-def valid_password(password: str, min_length: int = 6, max_length: int = 30) -> bool:
+def valid_password(
+    password: str, min_length: int = 6, max_length: int = 30
+) -> Tuple[bool, str]:
     allowable_chars = string.ascii_letters + string.digits + string.punctuation
 
     if not isinstance(password, str):
-        return False
+        return False, "Password not a string"
 
-    if min_length <= len(password) <= max_length:
-        return False
+    if len(password) < min_length:
+        return False, "Password too short"
+    elif len(password) > max_length:
+        return False, "Password too long"
 
     if password[0] in string.whitespace:
-        return False
+        return False, "Password cannot startwith whitespace"
 
     for char in password:
         if char not in allowable_chars:
-            return False
+            return False, "Password contains illegal characters"
 
-    return True
+    return True, "OK"
 
 
 def clean_dict(data: dict) -> None:

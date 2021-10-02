@@ -30,8 +30,9 @@ class User(BaseModel):
 
     @validator("password", pre=True, always=True)
     def validate_password(cls, v):
-        if not valid_password(v):
-            raise ValueError("password not allowable ")
+        isValid, msg = valid_password(v)
+        if not isValid:
+            raise ValueError(msg)
         return v
 
 

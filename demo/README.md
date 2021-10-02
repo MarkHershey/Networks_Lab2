@@ -8,12 +8,23 @@ At project root directory, execute:
 docker-compose up --build
 ```
 
+Check Documentation at: [http://0.0.0.0:8000/api/docs](http://0.0.0.0:8000/api/docs)
+
 ## Demo 1.1: User Sign Up
 
 Request:
 
 ```bash
-
+curl -i -X 'POST' \
+  'http://0.0.0.0:8000/api/auth/signup' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "username": "demo_user",
+  "password": "demo_password",
+  "name": "Demo Name",
+  "email": "demo_name@email.com"
+}'
 ```
 
 Expected response:
@@ -27,13 +38,32 @@ Expected response:
 Request:
 
 ```bash
-
+curl -i -X 'POST' \
+  'http://0.0.0.0:8000/api/auth/signin' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "username": "demo_user",
+  "password": "demo_password"
+}'
 ```
 
 Expected response:
 
 ```http
+HTTP/1.1 200 OK
+date: Sat, 02 Oct 2021 07:21:19 GMT
+server: uvicorn
+content-length: 250
+content-type: application/json
 
+{
+  "username": "demo_user",
+  "name": "Demo Name",
+  "email": "demo_name@email.com",
+  "admin": false,
+  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjM3MzksImlhdCI6MTYzMzE1ODkzOSwic3ViIjoiZGVtb191c2VyIn0.GqJ1FH7lHv-OJQuqaCnRc4gz3eZILh3reayn9ijdEhE"
+}
 ```
 
 ## Demo 2.1: User request rejection due to no authentication header
@@ -41,13 +71,21 @@ Expected response:
 Request:
 
 ```bash
-
+curl -i -X 'GET' \
+  'http://0.0.0.0:8000/api/records/' \
+  -H 'accept: application/json'
 ```
 
 Expected response:
 
 ```http
+HTTP/1.1 403 Forbidden
+date: Sat, 02 Oct 2021 07:24:13 GMT
+server: uvicorn
+content-length: 30
+content-type: application/json
 
+{"detail": "Not authenticated"}
 ```
 
 ## Demo 2.2: User request rejection due to an invalid JWT token
@@ -55,13 +93,22 @@ Expected response:
 Request:
 
 ```bash
-
+curl -i -X 'GET' \
+  'http://0.0.0.0:8000/api/records/' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer OBVIOUSLY_INVALID_JWT_TOKEN_FOR_DEMONSTRATION'
 ```
 
 Expected response:
 
 ```http
+HTTP/1.1 401 Unauthorized
+date: Sat, 02 Oct 2021 07:26:22 GMT
+server: uvicorn
+content-length: 26
+content-type: application/json
 
+{"detail": "Invalid token"}
 ```
 
 ## Demo 2.3: User request succeeded with a valid JWT token authentication
@@ -69,13 +116,22 @@ Expected response:
 Request:
 
 ```bash
-
+curl -i -X 'GET' \
+  'http://0.0.0.0:8000/api/records/' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjM3MzksImlhdCI6MTYzMzE1ODkzOSwic3ViIjoiZGVtb191c2VyIn0.GqJ1FH7lHv-OJQuqaCnRc4gz3eZILh3reayn9ijdEhE'
 ```
 
 Expected response:
 
 ```http
+HTTP/1.1 200 OK
+date: Sat, 02 Oct 2021 07:27:28 GMT
+server: uvicorn
+content-length: 2
+content-type: application/json
 
+[]
 ```
 
 ## Demo 3.1 Authenticated User create a new record
@@ -222,9 +278,41 @@ Expected response:
 
 ```
 
-## Demo 5.1 Export selected records and download as a file
+## Demo 5.1 Archive a record
+
+-   PUT (update a single resource)
+
+Request:
+
+```bash
+
+```
+
+Expected response:
+
+```http
+
+```
+
+## Demo 5.2 Export selected records and download as a file
 
 -   GET (returns a file)
+
+Request:
+
+```bash
+
+```
+
+Expected response:
+
+```http
+
+```
+
+## Demo 5.3 Batch delete archived records
+
+-   DELETE (batch delete resources matching a certain condition)
 
 Request:
 

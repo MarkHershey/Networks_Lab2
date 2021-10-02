@@ -28,6 +28,7 @@ class Record(BaseModel):
     starred: bool = False  # init to false
     confirmed: bool = False  # init to false if record is auto generated
     excluded: bool = False  # init to false, excluded from amount total computation
+    archived: bool = False  # init to false
 
     @validator("uid", pre=True, always=True)
     def default_uid(cls, v):
@@ -61,3 +62,19 @@ class RecordEdit(BaseModel):
     starred: Optional[bool] = None
     confirmed: Optional[bool] = None
     excluded: Optional[bool] = None
+    archived: Optional[bool] = None
+
+
+class RecordsQueryResponse(BaseModel):
+    query_time: datetime = None
+    count: int
+    username: str
+    date_range_start: datetime
+    date_range_end: datetime
+    total_amount = float
+    sorted_by: str
+    records: List[Record]
+
+    @validator("query_time", pre=True, always=True)
+    def default_query_time(cls, v):
+        return v or datetime.now()
