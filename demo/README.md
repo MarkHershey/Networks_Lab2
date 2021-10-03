@@ -59,7 +59,7 @@ Check out the API Docs at: [http://0.0.0.0:8000/api/docs](http://0.0.0.0:8000/ap
 ## Make demo requests
 
 -   Please run all following commands at project root directory to make requests.
--   Please note that you need to replace the `PASTE_YOUR_TOKEN_HERE` in each HTTP header with an actual token you get after signing in.
+-   Please note that you need to replace the `PASTE_YOUR_TOKEN_HERE` in each HTTP header with an actual token you get after signing in. (Use IDE's "Change All Occurrences" to change the token at once after you sign in.)
 
 ## Demo 1.1: User Sign Up
 
