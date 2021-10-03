@@ -29,7 +29,7 @@ async def user_sign_up(new_user: User):
         logger.error(f"New User failed to be inserted to DB: {new_user.username}")
         logger.error(e)
         raise HTTPException(status_code=500, detail="Failed to insert into database")
-    return
+    return "OK"
 
 
 @router.post("/signin", response_model=UserLoginResponse)

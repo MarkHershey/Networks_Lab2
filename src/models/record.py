@@ -40,7 +40,10 @@ class Record(BaseModel):
 
     @validator("amount_abs", pre=True, always=True)
     def absolute_amount(cls, v, *, values, **kwargs):
-        return v or abs(values["amount"]) if values["amount"] else None
+        if values.get("amount") is not None:
+            return v or abs(values["amount"])
+        else:
+            return None
 
 
 class RecordEdit(BaseModel):
@@ -64,16 +67,23 @@ class RecordEdit(BaseModel):
     excluded: Optional[bool] = None
     archived: Optional[bool] = None
 
+    @validator("amount_abs", pre=True, always=True)
+    def absolute_amount(cls, v, *, values, **kwargs):
+        if values.get("amount") is not None:
+            return v or abs(values["amount"])
+        else:
+            return None
+
 
 class RecordsQueryResponse(BaseModel):
     query_time: datetime = None
-    count: int
-    username: str
-    date_range_start: datetime
-    date_range_end: datetime
-    total_amount = float
-    sorted_by: str
-    records: List[Record]
+    count: int = 0
+    username: str = ""
+    date_range_start: datetime = None
+    date_range_end: datetime = None
+    total_amount: float = 0
+    sorted_by: str = ""
+    records: List[Record] = []
 
     @validator("query_time", pre=True, always=True)
     def default_query_time(cls, v):

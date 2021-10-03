@@ -87,7 +87,7 @@ def get_record_obj(
     return rec
 
 
-def get_records_from_csv(
+def insert_records_from_csv(
     filepath: Union[str, Path], username: str, debug=False
 ) -> dict:
     accountID = ""

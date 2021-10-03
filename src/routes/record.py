@@ -1,4 +1,5 @@
 # purchase records
+import gzip
 import json
 import shutil
 from datetime import datetime
@@ -16,9 +17,9 @@ from ..database import *
 from ..db_helpers import check_and_insert_one_record, query_records
 from ..error_msg import ErrorMsg as MSG
 from ..functional import clean_dict, json_serial, remove_none_value_keys
-from ..models.record import Record, RecordEdit
+from ..models.record import Record, RecordEdit, RecordsQueryResponse
 from ..models.user import UserData
-from ..statement_parser import get_records_from_csv
+from ..statement_parser import insert_records_from_csv
 
 router = APIRouter(prefix="/api/records", tags=["Records"])
 auth_handler = AuthHandler()
@@ -72,6 +73,60 @@ def save_json_to_local(
         return None
 
 
+def save_gzip_to_local(
+    json_data: Union[dict, list], username: str, save_name: str
+) -> Path:
+
+    user_dir: Path = FILE_DIR / username
+
+    if not user_dir.is_dir():
+        os.makedirs(user_dir)
+
+    destination: Path = user_dir / save_name
+    try:
+        content = json.dumps(json_data, default=json_serial).encode("utf-8")
+        f = gzip.open(str(destination), "wb")
+        f.write(content)
+        f.close()
+        return destination
+    except Exception as e:
+        logger.error(e)
+        logger.exception(e)
+        return None
+
+
+def wrap_payload(
+    payload: List[dict],
+    username: str = "",
+    sorted_by: str = "",
+    query_time: datetime = datetime.now(),
+) -> RecordsQueryResponse:
+    if len(payload) == 0:
+        return RecordsQueryResponse()
+
+    date_range_start, date_range_end = None, None
+    total_amount = 0
+    for i in payload:
+        date_time = i.get("date_time")
+        amount = i.get("amount")
+        total_amount += amount if amount else 0
+        if date_range_start is None or date_time < date_range_start:
+            date_range_start = date_time
+        if date_range_end is None or date_time > date_range_end:
+            date_range_end = date_time
+
+    return RecordsQueryResponse(
+        query_time=query_time,
+        count=len(payload),
+        username=username,
+        date_range_start=date_range_start,
+        date_range_end=date_range_end,
+        total_amount=round(total_amount, 2),
+        sorted_by=sorted_by,
+        records=payload,
+    )
+
+
 ##########################
 
 
@@ -80,11 +135,11 @@ async def create_record(
     new_record: Record, username=Depends(auth_handler.auth_wrapper)
 ):
     logger.debug(f"User({username}) creating a new record")
-    updated_user_data = check_and_insert_one_record(new_record, username)
-    return updated_user_data
+    check_and_insert_one_record(new_record, username)
+    return "OK"
 
 
-@router.get("/", response_model=List[Record])
+@router.get("/", response_model=RecordsQueryResponse)
 async def get_records(
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
@@ -97,6 +152,8 @@ async def get_records(
 ):
     logger.debug(f"User({username}) fetching records")
 
+    _now = datetime.now()
+
     q_results: List[dict] = query_records(
         username=username,
         start_time=start_time,
@@ -108,12 +165,13 @@ async def get_records(
         reverse=reverse,
     )
 
-    return q_results
+    return wrap_payload(q_results, username, sort_by, query_time=_now)
 
 
-@router.get("/{uid}", response_model=Record)
+@router.get("/{uid}/", response_model=RecordsQueryResponse)
 async def get_single_record(uid: str, username=Depends(auth_handler.auth_wrapper)):
     logger.debug(f"User({username}) getting a record")
+    _now = datetime.now()
     try:
         record_dict: dict = records_collection.find_one(
             filter={"username": username, "uid": uid}
@@ -128,10 +186,10 @@ async def get_single_record(uid: str, username=Depends(auth_handler.auth_wrapper
         logger.error(MSG.ITEM_NOT_FOUND)
         raise HTTPException(status_code=404, detail=MSG.ITEM_NOT_FOUND)
 
-    return record_dict
+    return wrap_payload([record_dict], username=username)
 
 
-@router.put("/{uid}", response_model=Record)
+@router.put("/{uid}/", response_model=RecordsQueryResponse)
 async def update_single_record(
     uid: str, record: RecordEdit, username=Depends(auth_handler.auth_wrapper)
 ):
@@ -154,10 +212,10 @@ async def update_single_record(
         logger.error(MSG.ITEM_NOT_FOUND)
         raise HTTPException(status_code=404, detail=MSG.ITEM_NOT_FOUND)
 
-    return _updated
+    return wrap_payload([_updated], username=username)
 
 
-@router.delete("/{uid}")
+@router.delete("/{uid}/")
 async def delete_single_record(uid: str, username=Depends(auth_handler.auth_wrapper)):
     logger.debug(f"User({username}) deleting a record")
     try:
@@ -173,7 +231,27 @@ async def delete_single_record(uid: str, username=Depends(auth_handler.auth_wrap
         logger.error(MSG.ITEM_NOT_FOUND)
         raise HTTPException(status_code=404, detail=MSG.ITEM_NOT_FOUND)
 
-    return
+    return "OK"
+
+
+@router.delete("/")
+async def delete_matching_records(
+    record: RecordEdit, username=Depends(auth_handler.auth_wrapper)
+):
+    logger.debug(f"User({username}) deleting matching records")
+    record_dict = dict(record.dict())
+    remove_none_value_keys(record_dict)
+
+    try:
+        _delete_result = records_collection.delete_many(
+            filter={"username": username, **record_dict}
+        )
+    except Exception as e:
+        logger.error(MSG.DB_UPDATE_ERROR)
+        logger.error(e)
+        raise HTTPException(status_code=500, detail=MSG.DB_UPDATE_ERROR)
+
+    return {"Number of records deleted": _delete_result.deleted_count}
 
 
 @router.post("/import", status_code=201)
@@ -193,7 +271,9 @@ async def import_records_from_dbs(
     if not saved_fp:
         raise HTTPException(status_code=500, detail="Server failed to save the file.")
 
-    data: dict = get_records_from_csv(filepath=saved_fp, username=username, debug=False)
+    data: dict = insert_records_from_csv(
+        filepath=saved_fp, username=username, debug=False
+    )
 
     insertions_count: int = data.get("insertions_count", 0)
     logger.debug(f"{insertions_count} new records imported.")
@@ -202,7 +282,7 @@ async def import_records_from_dbs(
 
 
 @router.get("/export", response_class=FileResponse)
-async def export_records_to_json(
+async def export_records(
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
     tag: Optional[str] = None,
@@ -226,8 +306,8 @@ async def export_records_to_json(
     )
 
     # export to json file at local
-    export_name = f"{username}_export_{timestamp_seconds()}.json"
-    saved_fp: Path = save_json_to_local(
+    export_name = f"{username}_export_{timestamp_seconds()}.json.gz"
+    saved_fp: Path = save_gzip_to_local(
         json_data=q_results, username=username, save_name=export_name
     )
     if not saved_fp:

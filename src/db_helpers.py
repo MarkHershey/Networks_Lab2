@@ -55,7 +55,7 @@ def query_records(
         "record time": "uid",
         "transaction time": "date_time",
         "amount": "amount",
-        "absolute amount": "amount",
+        "absolute amount": "amount_abs",
         "merchant": "merchant",
         "category": "category",
         "subcategory": "subcategory",
