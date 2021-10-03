@@ -1,0 +1,18 @@
+curl -i -X 'POST' \
+  'http://0.0.0.0:8000/api/records/' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "uid": "id_for_demo",
+  "account_id": "DBS1234",
+  "amount": -1299,
+  "merchant": "Apple",
+  "label": "iPhone 13",
+  "category": "Electronics",
+  "subcategory": "Phone",
+  "location": "SG",
+  "link": "https://www.apple.com/sg/shop/buy-iphone/iphone-13",
+  "starred": true,
+  "confirmed": true
+}'

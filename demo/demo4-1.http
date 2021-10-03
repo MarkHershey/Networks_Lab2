@@ -1,0 +1,9 @@
+curl -i -X 'PUT' \
+  'http://0.0.0.0:8000/api/records/id_for_demo/' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "amount": -2500.88,
+  "label": "MacBook Pro"
+}'

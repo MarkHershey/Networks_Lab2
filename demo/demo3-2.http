@@ -1,0 +1,9 @@
+curl -i -X 'POST' \
+  'http://0.0.0.0:8000/api/records/' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "label": "iPad mini",
+  "amount": "Not a number"
+}'

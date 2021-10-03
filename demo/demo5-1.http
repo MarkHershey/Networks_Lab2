@@ -1,0 +1,4 @@
+curl --output 'exported.json.gz' -X 'GET' \
+  'http://0.0.0.0:8000/api/records/export?offset=0&count=100&sort_by=transaction%20time&reverse=false' \
+  -H 'accept: */*' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'

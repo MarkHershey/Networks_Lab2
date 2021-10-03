@@ -1,0 +1,4 @@
+curl -i -X 'GET' \
+  'http://0.0.0.0:8000/api/records/' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer OBVIOUSLY_INVALID_JWT_TOKEN_FOR_DEMONSTRATION'

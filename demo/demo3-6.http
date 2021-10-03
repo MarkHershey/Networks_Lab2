@@ -1,0 +1,4 @@
+curl -i -X 'GET' \
+  'http://0.0.0.0:8000/api/records/?start_time=2021-08-01T00%3A00%3A00.000&end_time=2021-08-05T23%3A59%3A59.999&offset=2&count=5&sort_by=amount&reverse=false' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'

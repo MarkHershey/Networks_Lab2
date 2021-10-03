@@ -14,7 +14,52 @@ At project root directory, execute:
 docker-compose up --build
 ```
 
-Check Documentation at: [http://0.0.0.0:8000/api/docs](http://0.0.0.0:8000/api/docs)
+Check out the API Docs at: [http://0.0.0.0:8000/api/docs](http://0.0.0.0:8000/api/docs)
+
+## Checkoff requirements list
+
+-   [x] A REST-over-HTTP API written in any programming language.
+    -   [x] Can be deployed on any docker host using `docker compose`
+-   [x] With accompanying `.http` unit test files, showcasing your API's ability to respond to:
+    -   [x] a GET request ...
+        -   [x] with no query parameters
+        -   [x] with a `sortBy` query parameter, to transform the order of the items returned
+        -   [x] with a `count` query parameter, to limit the number of items returned
+        -   [x] with a `offset` query parameter, to "skip" ahead by a number of items
+        -   [x] with any combination of the above query parameters
+    -   [x] a POST request ...
+        -   [x] that creates a new resource with the given attributes in the body
+        -   [x] show that the resource has indeed been created through another HTTP request
+        -   [x] has validation and returns an appropriate HTTP response code if the input data is invalid (e.g. missing name)
+    -   [x] either a DELETE or PUT request...
+        -   [x] that deletes or updates a _single_ resource respectively
+        -   [x] show that the resource has indeed been modified through another HTTP request = has validation and returns an appropriate HTTP response code if the input data is invalid
+-   [x] Identify which routes in your application are _idempotent_, and provide proof to support your answer.
+-   [x] Implement at least two of the following challenges:
+    -   [x] File upload in a POST request, using multipart/form-data
+    -   [x] Have a route in your application that returns a content type that is not _plaintext_
+    -   [x] Some form of authorization through inspecting the request headers
+    -   [x] A special route that can perform a batch delete or update of resources matching a certain condition
+
+## List of API Endpoints
+
+-   `POST` `/api/auth/signup`
+-   `POST` `/api/auth/signin`
+-   `GET` `/api/records` _(idempotent)_
+-   `POST` `/api/records`
+-   `DELETE` `/api/records` _(idempotent)_
+-   `GET` `/api/records/{uid}/` _(idempotent)_
+-   `PUT` `/api/records/{uid}/` _(idempotent)_
+-   `DELETE` `/api/records/{uid}/` _(idempotent)_
+-   `POST` `/api/records/import`
+-   `GET` `/api/records/export` _(idempotent)_
+
+<img src="endpoints.png" height=400 width=auto>
+
+## Make demo requests
+
+-   Please run all following commands at project root directory to make requests.
+-   Please note that you need to replace the `PASTE_YOUR_TOKEN_HERE` in each HTTP header with an actual token you get after signing in.
 
 ## Demo 1.1: User Sign Up
 
@@ -74,9 +119,11 @@ content-type: application/json
   "name": "Demo Name",
   "email": "demo_name@email.com",
   "admin": false,
-  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ"
+  "token": "THIS_IS_YOUR_TOKEN"
 }
 ```
+
+**^^^ Please note down the token you received, we need this token in following requests!**
 
 ## Demo 2.1: User request rejection due to no authentication header
 
@@ -131,7 +178,7 @@ Request:
 curl -i -X 'GET' \
   'http://0.0.0.0:8000/api/records/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ'
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'
 ```
 
 Expected response:
@@ -165,7 +212,7 @@ Request:
 curl -i -X 'POST' \
   'http://0.0.0.0:8000/api/records/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE' \
   -H 'Content-Type: application/json' \
   -d '{
   "uid": "id_for_demo",
@@ -204,7 +251,7 @@ Request:
 curl -i -X 'POST' \
   'http://0.0.0.0:8000/api/records/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE' \
   -H 'Content-Type: application/json' \
   -d '{
   "label": "iPad mini",
@@ -242,7 +289,7 @@ Request:
 curl -i -X 'GET' \
   'http://0.0.0.0:8000/api/records/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ'
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'
 ```
 
 Expected response:
@@ -296,13 +343,15 @@ content-type: application/json
 
 Request:
 
+-   At project root directory, execute:
+
 ```bash
 curl -i -X 'POST' \
   'http://0.0.0.0:8000/api/records/import' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE' \
   -H 'Content-Type: multipart/form-data' \
-  -F 'file=@dbs_statement.csv;type=text/csv'
+  -F 'file=@demo/dbs_statement.csv;type=text/csv'
 ```
 
 Expected response:
@@ -335,7 +384,7 @@ Request:
 curl -i -X 'GET' \
   'http://0.0.0.0:8000/api/records/?sort_by=absolute%20amount&reverse=true' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ'
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'
 ```
 
 Expected response:
@@ -382,7 +431,7 @@ Request:
 curl -i -X 'GET' \
   'http://0.0.0.0:8000/api/records/?start_time=2021-08-01T00%3A00%3A00.000&end_time=2021-08-05T23%3A59%3A59.999&offset=2&count=5&sort_by=amount&reverse=false' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ'
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'
 ```
 
 Expected response:
@@ -430,7 +479,7 @@ Request:
 curl -i -X 'PUT' \
   'http://0.0.0.0:8000/api/records/id_for_demo/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE' \
   -H 'Content-Type: application/json' \
   -d '{
   "amount": -2500.88,
@@ -495,7 +544,7 @@ Request:
 curl -i -X 'DELETE' \
   'http://0.0.0.0:8000/api/records/id_for_demo/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ'
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'
 ```
 
 Expected response:
@@ -522,7 +571,7 @@ Request:
 curl -i -X 'DELETE' \
   'http://0.0.0.0:8000/api/records/id_for_demo/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ'
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'
 ```
 
 Expected response:
@@ -547,7 +596,7 @@ Request:
 curl --output 'exported.json.gz' -X 'GET' \
   'http://0.0.0.0:8000/api/records/export?offset=0&count=100&sort_by=transaction%20time&reverse=false' \
   -H 'accept: */*' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ'
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'
 ```
 
 Expected response:
@@ -565,7 +614,7 @@ Request:
 curl -i -X 'DELETE' \
   'http://0.0.0.0:8000/api/records/' \
   -H 'accept: application/json' \
-  -H 'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MzM3NjY4NDcsImlhdCI6MTYzMzE2MjA0Nywic3ViIjoiZGVtb191c2VyIn0.qqfjCn5W2woCprgswG_ICqhVL8Y1ALGawnTE0YETzcQ' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE' \
   -H 'Content-Type: application/json' \
   -d '{"imported": true}'
 ```

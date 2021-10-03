@@ -1,0 +1,8 @@
+curl -i -X 'POST' \
+  'http://0.0.0.0:8000/api/auth/signin' \
+  -H 'accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "username": "demo_user",
+  "password": "demo_password"
+}'

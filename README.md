@@ -7,26 +7,31 @@ SUTD 50.012 Networks Lab 2
 
 ## Checkoff
 
-TA please refer to [demo](demo) for checkoff demo.
+TA, please refer to the [demo](demo) folder for checkoff instructions.
 
 ## Development
 
 ### Run MongoDB and API services in containers
 
-0. Install [**docker**](https://docs.docker.com/engine/install/) & [**docker-compose**](https://docs.docker.com/compose/install/).
+0.  Install [**docker**](https://docs.docker.com/engine/install/) & [**docker-compose**](https://docs.docker.com/compose/install/).
 
-1. Build and run containers using docker-compose
+1.  Build and run containers using docker-compose
     ```bash
+    # at project root
     docker-compose up --build
     ```
-2. Stop and remove containers
+    Check API documentation after firing up local server
+    -   Go to [127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs)
+2.  Stop and remove containers
     ```bash
+    # at project root
     docker-compose down
     ```
-
-Check API documentation after firing up local server
-
--   Go to [127.0.0.1:8000/api/docs](http://127.0.0.1:8000/api/docs)
+3.  Delete all local data and local cache
+    ```bash
+    # at project root
+    make clean
+    ```
 
 ## Disclaimers
 

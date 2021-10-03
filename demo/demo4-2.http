@@ -1,0 +1,4 @@
+curl -i -X 'DELETE' \
+  'http://0.0.0.0:8000/api/records/id_for_demo/' \
+  -H 'accept: application/json' \
+  -H 'Authorization: Bearer PASTE_YOUR_TOKEN_HERE'
