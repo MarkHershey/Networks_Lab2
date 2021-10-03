@@ -54,7 +54,7 @@ Check out the API Docs at: [http://0.0.0.0:8000/api/docs](http://0.0.0.0:8000/ap
 -   `POST` `/api/records/import`
 -   `GET` `/api/records/export` _(idempotent)_
 
-<img src="endpoints.png" height=400 width=auto>
+<img src="endpoints.png" height=400 width=auto alt="APIs">
 
 ## Make demo requests
 
@@ -604,11 +604,13 @@ Expected response:
 -   200 OK
 -   A binary file received as `exported.json.gz`
 
-## Demo 5.2 Batch delete archived records
+## Demo 5.2 Batch delete imported records
 
 -   DELETE (batch delete resources matching a certain condition)
 
 Request:
+
+-   All records that is imported from parsing bank statements will have their `imported` set to `true`. We now try to delete all the records with the `imported` flag.
 
 ```bash
 curl -i -X 'DELETE' \
